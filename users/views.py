@@ -1,10 +1,11 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET
 
+from common.constants import PAGE_SIZE
+from common.pagination import paginate
 from projects.models import Project
 
 from .forms import ChangePasswordForm, LoginForm, ProfileEditForm, RegisterForm
@@ -44,86 +45,67 @@ def user_list(request):
             my_project_ids = Project.objects.filter(owner=request.user).values_list("id", flat=True)
             qs = qs.filter(participated_projects__id__in=my_project_ids).distinct()
 
-    paginator = Paginator(qs, 12)
-    page_obj = paginator.get_page(request.GET.get("page"))
-    query_prefix = ""
-    if active_filter:
-        query_prefix = f"filter={active_filter}&"
+    pg = paginate(request, qs, per_page=PAGE_SIZE, extra_params={"filter": active_filter or ""})
     return render(
         request,
         "users/participants.html",
         {
             "participants": qs,
-            "page_obj": page_obj,
+            "page_obj": pg.page_obj,
             "active_filter": active_filter,
-            "query_prefix": query_prefix,
+            "query_prefix": pg.query_prefix,
         },
     )
 
 
 def register(request):
-    if request.method == "POST":
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("/projects/list/")
-    else:
-        form = RegisterForm()
+    form = RegisterForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        login(request, user)
+        return redirect(reverse("projects:list"))
     return render(request, "users/register.html", {"form": form})
 
 
 def login_view(request):
-    if request.method == "POST":
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            login(request, form.cleaned_data["user"])
-            return redirect("/projects/list/")
-    else:
-        form = LoginForm()
+    form = LoginForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        login(request, form.cleaned_data["user"])
+        return redirect(reverse("projects:list"))
     return render(request, "users/login.html", {"form": form})
 
 
 @login_required
 def logout_view(request):
     logout(request)
-    return redirect("/projects/list/")
+    return redirect(reverse("projects:list"))
 
 
 @require_GET
 def user_details(request, user_id: int):
-    user = (
-        User.objects.prefetch_related("owned_projects", "participated_projects")
-        .filter(pk=user_id)
-        .first()
+    user = get_object_or_404(
+        User.objects.prefetch_related("owned_projects", "participated_projects"),
+        pk=user_id,
     )
-    if not user:
-        raise Http404
     return render(request, "users/user-details.html", {"user": user})
 
 
 @login_required
 def edit_profile(request):
-    if request.method == "POST":
-        form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect(f"/users/{request.user.id}/")
-    else:
-        form = ProfileEditForm(instance=request.user)
+    form = ProfileEditForm(request.POST or None, request.FILES or None, instance=request.user)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect(reverse("users:details", kwargs={"user_id": request.user.id}))
     return render(request, "users/edit_profile.html", {"form": form, "user": request.user})
 
 
 @login_required
 def change_password(request):
-    if request.method == "POST":
-        form = ChangePasswordForm(user=request.user, data=request.POST)
-        if form.is_valid():
-            form.save()
-            # Keep session by re-login
-            login(request, request.user)
-            return redirect(f"/users/{request.user.id}/")
-    else:
-        form = ChangePasswordForm(user=request.user)
+    form = ChangePasswordForm(user=request.user, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        # Keep session by re-login
+        login(request, request.user)
+        return redirect(reverse("users:details", kwargs={"user_id": request.user.id}))
     return render(request, "users/change_password.html", {"form": form})
 

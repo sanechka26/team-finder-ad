@@ -3,8 +3,6 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Создать и заполнить .env, ориентируясь на .env_example
-
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
@@ -60,9 +58,9 @@ WSGI_APPLICATION = "team_finder.wsgi.application"
 
 AUTH_USER_MODEL = "users.User"
 
-LOGIN_URL = "/users/login/"
-LOGIN_REDIRECT_URL = "/projects/list/"
-LOGOUT_REDIRECT_URL = "/projects/list/"
+LOGIN_URL = config("DJANGO_LOGIN_URL", default="/users/login/")
+LOGIN_REDIRECT_URL = config("DJANGO_LOGIN_REDIRECT_URL", default="/projects/list/")
+LOGOUT_REDIRECT_URL = config("DJANGO_LOGOUT_REDIRECT_URL", default="/projects/list/")
 
 
 # Database

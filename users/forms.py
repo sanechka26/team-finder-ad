@@ -3,7 +3,8 @@ from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 
-from .models import User, normalize_phone, validate_github_url, validate_phone
+from .models import User
+from .validators import normalize_phone, validate_github_url, validate_phone
 
 
 class RegisterForm(forms.ModelForm):
@@ -11,32 +12,27 @@ class RegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["name", "surname", "email", "password"]
+        fields = ["name", "surname", "email", "phone", "password"]
 
     def clean_password(self):
         password = self.cleaned_data.get("password") or ""
         password_validation.validate_password(password)
         return password
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone") or ""
+        validate_phone(phone)
+        phone = normalize_phone(phone)
+        if User.objects.filter(phone=phone).exists():
+            raise ValidationError("Этот номер телефона уже используется")
+        return phone
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
-        # phone is required by model; but registration form doesn't ask it.
-        # Set a temporary unique value; user can change it later in profile edit.
-        # (Templates in variant 1 do not ask phone on register.)
-        if not user.phone:
-            user.phone = self._generate_temp_phone()
         if commit:
             user.save()
         return user
-
-    def _generate_temp_phone(self) -> str:
-        # Generate a unique phone matching validation (+7XXXXXXXXXX).
-        # Users are expected to set a real phone later in profile edit.
-        while True:
-            num = "+7" + f"{User.objects.count():010d}"
-            if not User.objects.filter(phone=num).exists():
-                return num
 
 
 class LoginForm(forms.Form):

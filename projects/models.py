@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from common.constants import PROJECT_NAME_MAX_LENGTH
+
 
 class Project(models.Model):
     STATUS_OPEN = "open"
@@ -10,7 +12,7 @@ class Project(models.Model):
         (STATUS_CLOSED, "Closed"),
     ]
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=PROJECT_NAME_MAX_LENGTH)
     description = models.TextField(blank=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

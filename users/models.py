@@ -1,54 +1,20 @@
 import io
 import random
-import re
-from urllib.parse import urlparse
 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.core.validators import URLValidator
 from django.db import models
 
 from PIL import Image, ImageDraw, ImageFont
 
+from common.constants import AVATAR_BG_COLORS, USER_NAME_MAX_LENGTH
+from common.validators import normalize_phone, validate_github_url, validate_phone
+
 from .managers import UserManager
 
 
-PHONE_RE = re.compile(r"^(8\d{10}|\+7\d{10})$")
-
-
-def normalize_phone(value: str) -> str:
-    value = (value or "").strip().replace(" ", "").replace("-", "")
-    if value.startswith("8") and len(value) == 11:
-        return "+7" + value[1:]
-    return value
-
-
-def validate_phone(value: str):
-    value = normalize_phone(value)
-    if not PHONE_RE.match(value):
-        raise ValidationError("Телефон должен быть в формате 8XXXXXXXXXX или +7XXXXXXXXXX")
-
-
-def validate_github_url(value: str):
-    if not value:
-        return
-    URLValidator()(value)
-    host = (urlparse(value).hostname or "").lower()
-    if host not in {"github.com", "www.github.com"}:
-        raise ValidationError("Ссылка должна вести на github.com")
-
-
 def _pick_avatar_bg() -> tuple[int, int, int]:
-    palette = [
-        (52, 73, 94),   # wet asphalt
-        (44, 62, 80),   # midnight blue
-        (22, 160, 133),  # green sea
-        (41, 128, 185),  # belize hole
-        (142, 68, 173),  # wisteria
-        (39, 174, 96),   # emerald
-    ]
-    return random.choice(palette)
+    return random.choice(AVATAR_BG_COLORS)
 
 
 def generate_avatar_png(letter: str, size: int = 256) -> ContentFile:
@@ -83,8 +49,8 @@ def generate_avatar_png(letter: str, size: int = 256) -> ContentFile:
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    name = models.CharField(max_length=124)
-    surname = models.CharField(max_length=124)
+    name = models.CharField(max_length=USER_NAME_MAX_LENGTH)
+    surname = models.CharField(max_length=USER_NAME_MAX_LENGTH)
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     phone = models.CharField(max_length=12, unique=True, validators=[validate_phone])
     github_url = models.URLField(blank=True, validators=[validate_github_url])
@@ -104,7 +70,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["name", "surname", "phone"]
 
     class Meta:
-        ordering = ["id"]
+        pass
 
     def clean(self):
         super().clean()
