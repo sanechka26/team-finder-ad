@@ -10,5 +10,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
+  web:
+    build: .
+    env_file:
+      - .env
+    container_name: teamfinder_web
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
 volumes:
   postgres_data:

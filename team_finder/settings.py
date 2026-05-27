@@ -9,7 +9,7 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
 
 # Application definition
@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "users",
+    "projects",
 ]
 
 MIDDLEWARE = [
@@ -34,6 +36,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "team_finder.urls"
+
+AUTHENTICATION_BACKENDS = [
+    "users.backends.EmailBackend",
+]
 
 TEMPLATES = [
     {
@@ -51,6 +57,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "team_finder.wsgi.application"
+
+AUTH_USER_MODEL = "users.User"
+
+LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/projects/list/"
+LOGOUT_REDIRECT_URL = "/projects/list/"
 
 
 # Database
