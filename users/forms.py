@@ -3,8 +3,9 @@ from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 
+from common.validators import normalize_phone, validate_github_url, validate_phone
+
 from .models import User
-from .validators import normalize_phone, validate_github_url, validate_phone
 
 
 class RegisterForm(forms.ModelForm):

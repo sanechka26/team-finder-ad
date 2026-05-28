@@ -1,7 +1,8 @@
 from django import forms
 
+from common.validators import validate_github_url
+
 from .models import Project
-from .validators import validate_github_url
 
 
 class ProjectForm(forms.ModelForm):

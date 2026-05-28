@@ -36,7 +36,7 @@ def project_details(request, project_id: int):
 @login_required
 def create_project(request):
     form = ProjectForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         project = form.save(commit=False)
         project.owner = request.user
         project.save()
@@ -51,7 +51,7 @@ def edit_project(request, project_id: int):
     if not (request.user.is_staff or project.owner_id == request.user.id):
         raise Http404
     form = ProjectForm(request.POST or None, instance=project)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         form.save()
         return redirect(reverse("projects:details", kwargs={"project_id": project.id}))
     return render(request, "projects/create-project.html", {"form": form, "is_edit": True})

@@ -60,7 +60,7 @@ def user_list(request):
 
 def register(request):
     form = RegisterForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         user = form.save()
         login(request, user)
         return redirect(reverse("projects:list"))
@@ -69,7 +69,7 @@ def register(request):
 
 def login_view(request):
     form = LoginForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         login(request, form.cleaned_data["user"])
         return redirect(reverse("projects:list"))
     return render(request, "users/login.html", {"form": form})
@@ -93,7 +93,7 @@ def user_details(request, user_id: int):
 @login_required
 def edit_profile(request):
     form = ProfileEditForm(request.POST or None, request.FILES or None, instance=request.user)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         form.save()
         return redirect(reverse("users:details", kwargs={"user_id": request.user.id}))
     return render(request, "users/edit_profile.html", {"form": form, "user": request.user})
@@ -102,7 +102,7 @@ def edit_profile(request):
 @login_required
 def change_password(request):
     form = ChangePasswordForm(user=request.user, data=request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         form.save()
         # Keep session by re-login
         login(request, request.user)

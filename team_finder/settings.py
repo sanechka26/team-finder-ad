@@ -9,9 +9,6 @@ DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
-
-# Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -42,7 +39,7 @@ AUTHENTICATION_BACKENDS = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / f"templates_var{config('TASK_VERSION', default='1')}"],
+        "DIRS": [BASE_DIR / "templates_var1"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -58,13 +55,9 @@ WSGI_APPLICATION = "team_finder.wsgi.application"
 
 AUTH_USER_MODEL = "users.User"
 
-LOGIN_URL = config("DJANGO_LOGIN_URL", default="/users/login/")
-LOGIN_REDIRECT_URL = config("DJANGO_LOGIN_REDIRECT_URL", default="/projects/list/")
-LOGOUT_REDIRECT_URL = config("DJANGO_LOGOUT_REDIRECT_URL", default="/projects/list/")
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+LOGIN_URL = "users:login"
+LOGIN_REDIRECT_URL = "projects:list"
+LOGOUT_REDIRECT_URL = "projects:list"
 
 DATABASES = {
     "default": {
@@ -76,10 +69,6 @@ DATABASES = {
         "PORT": config("POSTGRES_PORT", default=5432, cast=int),
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = []
 if not DEBUG:
@@ -100,9 +89,6 @@ if not DEBUG:
         ]
     )
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
@@ -111,18 +97,10 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-# Media files
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
